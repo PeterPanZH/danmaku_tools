@@ -24,7 +24,7 @@ import numpy as np
 from scipy.ndimage.filters import convolve
 from scipy.stats import halfnorm
 
-from danmaku_tools import read_danmaku_file, get_value, get_time
+from danmaku_tools.danmaku_tools import read_danmaku_file, get_value, get_time
 
 import jieba
 from collections import Counter
