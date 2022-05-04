@@ -241,9 +241,6 @@ def get_heat_time(all_children, idf_list):
     #     he_points[0] += [highest_idx]
     #     he_points[1] += [cur_highest]
 
-    print(heat_value_gaussian)
-    print(heat_value_gaussian2)
-
     return heat_time, [0 if np.isnan(v) else v for v in (heat_value_gaussian / np.sqrt(heat_value_gaussian2))], np.sqrt(
         heat_value_gaussian2).tolist(), he_points, he_range
 
@@ -516,18 +513,11 @@ if __name__ == '__main__':
             jieba.load_userdict(args.user_dict)
             print(f"User-defined dictionary '{args.user_dict}' loaded")
 
-        print(xml_list)
-
         slices = gen_danmaku_slices(xml_list, 1)
         wordcount_slices = gen_slice_wordcount(slices)
         idf_list = gen_idf_dict(wordcount_slices)
 
         heat_values = get_heat_time(xml_list, idf_list)
-
-        print(slices)
-        print(wordcount_slices)
-        print(idf_list)
-        print(heat_values)
 
         if args.he_range is not None:
             with open(args.he_range, "w") as file:
@@ -555,7 +545,6 @@ if __name__ == '__main__':
                         text = element.text
                         if text is not None and not text.replace(" ", "").replace("哈", "") == "":
                             comment_list += [text]
-                print(len(comment_list))
                 if len(comment_list) > 1000:
                     comment_list = random.sample(comment_list, 1000)
                 tr4s.analyze("\n".join(comment_list), lower=True, source='no_filter')
@@ -637,7 +626,6 @@ if __name__ == '__main__':
                     user_boat = raw_data[7]
                     display_username = follower >= 1000 or user_level > 25 or user_boat >= 2
                     if display_username:
-                        print(user_name)
                         child.text = f"@{user_name}:" + child.text
             except Exception as e:
                 print(e)
