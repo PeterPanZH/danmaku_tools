@@ -24,7 +24,7 @@ import numpy as np
 from scipy.ndimage.filters import convolve
 from scipy.stats import halfnorm
 
-from danmaku_tools.danmaku_tools import read_danmaku_file, get_value, get_time
+from danmaku_tools import read_danmaku_file, get_value, get_time
 
 import jieba
 from collections import Counter
@@ -125,6 +125,10 @@ def gen_danmaku_slices(all_children, interval=1):
     Returns:
     slices -- slices of danmaku, each entry as a list of danmaku_string within the interval
     """
+
+    if len(all_children) == 0:
+        return []
+
     interval = int(interval)
     final_time = get_time(all_children[-1])
     slices = [[] for i in range(int(final_time)//int(interval) + 1)]
@@ -173,7 +177,7 @@ def get_heat_time(all_children, idf_list):
 
     cur_entry = 0
 
-    final_time = get_time(all_children[-1])
+    final_time = -1 if len(all_children) == 0 else get_time(all_children[-1])
 
     cur_heat = 0
 
@@ -237,8 +241,11 @@ def get_heat_time(all_children, idf_list):
     #     he_points[0] += [highest_idx]
     #     he_points[1] += [cur_highest]
 
-    return heat_time, heat_value_gaussian / np.sqrt(heat_value_gaussian2), np.sqrt(
-        heat_value_gaussian2), he_points, he_range
+    print(heat_value_gaussian)
+    print(heat_value_gaussian2)
+
+    return heat_time, [0 if np.isnan(v) else v for v in (heat_value_gaussian / np.sqrt(heat_value_gaussian2))], np.sqrt(
+        heat_value_gaussian2).tolist(), he_points, he_range
 
 
 def convert_time(secs):
@@ -256,6 +263,9 @@ def draw_he_line(ax: plt.Axes, heat_time, heat_value_gaussian, heat_value_gaussi
 def draw_he_area(ax: plt.Axes, current_time: float, heat_time, heat_value_gaussian, heat_value_gaussian2, name='all',
                  no_average=False):
     total_len = len(heat_time[0])
+    if total_len == 0:
+        return
+
     change_pos_list = [0]
     low_area_begin_pos_list = []
     high_area_begin_pos_list = []
@@ -349,8 +359,14 @@ def draw_he(he_graph, heat_time, heat_value_gaussian, heat_value_gaussian2, he_p
             else:
                 sc_color = (171, 26, 50)
             plt.scatter(sc[0], height, s=75, c=[[rgb/255.0 for rgb in sc_color]])
-    plt.xlim(heat_time[0][0], heat_time[0][-1])
-    plt.ylim(min(heat_value_gaussian), max(heat_value_gaussian))
+    if len(heat_time[0]) == 0:
+        plt.xlim(0, 0)
+    else:
+        plt.xlim(heat_time[0][0], heat_time[0][-1])
+    if len(heat_value_gaussian) == 0:
+        plt.ylim(0, 0)
+    else:
+        plt.ylim(min(heat_value_gaussian), max(heat_value_gaussian))
 
     plt.box(False)
     plt.savefig(he_graph, transparent=True)
@@ -499,11 +515,19 @@ if __name__ == '__main__':
         if args.user_dict is not None:
             jieba.load_userdict(args.user_dict)
             print(f"User-defined dictionary '{args.user_dict}' loaded")
+
+        print(xml_list)
+
         slices = gen_danmaku_slices(xml_list, 1)
         wordcount_slices = gen_slice_wordcount(slices)
         idf_list = gen_idf_dict(wordcount_slices)
 
         heat_values = get_heat_time(xml_list, idf_list)
+
+        print(slices)
+        print(wordcount_slices)
+        print(idf_list)
+        print(heat_values)
 
         if args.he_range is not None:
             with open(args.he_range, "w") as file:
